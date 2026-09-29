@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future Leave Planner App</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-calendar-days text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">LeaveSync Pro</h1>
+                    <p class="text-xs text-slate-500">Future Leave Planning & Approval Portal</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal()" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-sm transition-all cursor-pointer">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Plan New Leave</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Summary Metric Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Leave Plans</p>
+                    <h3 id="stat-total-requests" class="text-3xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Days Planned</p>
+                    <h3 id="stat-total-days" class="text-3xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-business-time"></i>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Approved Plans</p>
+                    <h3 id="stat-approved" class="text-3xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Departments Active</p>
+                    <h3 id="stat-depts" class="text-3xl font-bold text-slate-900 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-building-user"></i>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Submitted Leave Requests</h2>
+                    <p class="text-sm text-slate-500">Review employee future leave plans across Civil, Mech, and Ele departments.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-search text-xs"></i>
+                        </span>
+                        <input type="text" id="search-input" oninput="renderTable()" placeholder="Search name or ID..." class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white w-full sm:w-64">
+                    </div>
+                    <select id="filter-dept" onchange="renderTable()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Departments</option>
+                        <option value="Civil">Civil</option>
+                        <option value="Mech">Mech</option>
+                        <option value="Ele">Ele</option>
+                    </select>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportJSON()" title="Export JSON" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm transition-all cursor-pointer">
+                            <i class="fa-solid fa-code"></i>
+                        </button>
+                        <button onclick="exportCSV()" title="Export CSV" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm transition-all cursor-pointer">
+                            <i class="fa-solid fa-file-csv"></i>
+                        </button>
+                        <button onclick="clearAllData()" title="Clear All Data" class="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-sm transition-all cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Data Table matching exact columns requested -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <th class="py-3.5 px-4 text-center w-16">SL. No.</th>
+                            <th class="py-3.5 px-6">Employee Name</th>
+                            <th class="py-3.5 px-6">Department</th>
+                            <th class="py-3.5 px-6">Leave Type</th>
+                            <th class="py-3.5 px-6">Duration</th>
+                            <th class="py-3.5 px-6">Days</th>
+                            <th class="py-3.5 px-6">Reason</th>
+                            <th class="py-3.5 px-6 text-center">Approve</th>
+                            <th class="py-3.5 px-6 text-center">Reject</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leave-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="empty-state" class="hidden py-16 text-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-700">No leave plans found</h3>
+                <p class="text-sm text-slate-500 mt-1">Get started by planning a new future leave request.</p>
+                <button onclick="openModal()" class="mt-4 inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all cursor-pointer">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Plan Leave Now</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <div id="leave-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-900">Plan Future Leave</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="leave-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="edit-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Employee Name *</label>
+                        <input type="text" id="emp-name" required placeholder="e.g. John Smith" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Employee ID *</label>
+                        <input type="text" id="emp-id" required placeholder="e.g. CIV-102" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Department *</label>
+                        <select id="emp-dept" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                            <option value="">Select Department</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Mech">Mech</option>
+                            <option value="Ele">Ele</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Leave Type (SL, CL, PL) *</label>
+                        <select id="leave-type" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                            <option value="">Select Type</option>
+                            <option value="SL">SL (Sick Leave)</option>
+                            <option value="CL">CL (Casual Leave)</option>
+                            <option value="PL">PL (Privilege Leave)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Start Date *</label>
+                        <input type="date" id="start-date" required onchange="calculateDays()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">End Date *</label>
+                        <input type="date" id="end-date" required onchange="calculateDays()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                </div>
+
+                <!-- Calculation Badge -->
+                <div class="bg-indigo-50/75 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-indigo-900 uppercase">Calculated Working Days</p>
+                            <p id="calc-summary-text" class="text-xs text-indigo-700">Select dates to calculate work days</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="calc-days-badge" class="text-xl font-bold text-indigo-900">0</span>
+                        <span class="text-xs text-indigo-700 block">Days</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Reason / Notes</label>
+                    <textarea id="leave-reason" rows="3" placeholder="Brief details about your leave plan..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer">Save Leave Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="review-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <h3 id="review-modal-title" class="text-lg font-bold text-slate-900">Review Leave Request</h3>
+                <button onclick="closeReviewModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="review-form" onsubmit="handleReviewSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="review-id">
+                <input type="hidden" id="review-action">
+                
+                <div>
+                    <p id="review-employee-info" class="text-sm font-semibold text-slate-800 mb-1"></p>
+                    <p id="review-dates-info" class="text-xs text-slate-500 mb-3"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Manager Comments / Feedback *</label>
+                    <textarea id="manager-comment" required rows="3" placeholder="Provide reason or feedback notes for approval/rejection..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeReviewModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all cursor-pointer">Cancel</button>
+                    <button type="submit" id="review-submit-btn" class="px-5 py-2.5 text-white font-semibold text-sm rounded-xl shadow-md transition-all cursor-pointer">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="notification-toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="notification-content" class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 text-sm">
+            <i id="notification-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="notification-text">Action completed successfully.</span>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'leavesync_future_plans_sl_cl_pl_v1';
+
+        const sampleData = [
+            {
+                id: 'LP-101',
+                name: 'Rahul Sharma',
+                empId: 'CIV-402',
+                department: 'Civil',
+                type: 'PL',
+                startDate: '2026-07-10',
+                endDate: '2026-07-18',
+                workingDays: 7,
+                calendarDays: 9,
+                reason: 'Family function and site travel.',
+                status: 'Approved',
+                managerComment: 'Approved. Project deliverables are covered by teammate.'
+            },
+            {
+                id: 'LP-102',
+                name: 'Priya Patel',
+                empId: 'MECH-112',
+                department: 'Mech',
+                type: 'CL',
+                startDate: '2026-08-05',
+                endDate: '2026-08-07',
+                workingDays: 3,
+                calendarDays: 3,
+                reason: 'Personal urgent work.',
+                status: 'Pending',
+                managerComment: ''
+            },
+            {
+                id: 'LP-103',
+                name: 'Amit Kumar',
+                empId: 'ELE-209',
+                department: 'Ele',
+                type: 'SL',
+                startDate: '2026-06-12',
+                endDate: '2026-06-14',
+                workingDays: 3,
+                calendarDays: 3,
+                reason: 'Medical recovery.',
+                status: 'Rejected',
+                managerComment: 'Critical substation audit scheduled on these dates.'
+            }
+        ];
+
+        let leavePlans = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderTable();
+            updateStats();
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('start-date').setAttribute('min', todayStr);
+            document.getElementById('end-date').setAttribute('min', todayStr);
+        });
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    leavePlans = JSON.parse(stored);
+                } catch (e) {
+                    leavePlans = sampleData;
+                }
+            } else {
+                leavePlans = sampleData;
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(leavePlans));
+            updateStats();
+        }
+
+        function calculateDays() {
+            const startVal = document.getElementById('start-date').value;
+            const endVal = document.getElementById('end-date').value;
+
+            if (!startVal || !endVal) {
+                document.getElementById('calc-days-badge').innerText = '0';
+                document.getElementById('calc-summary-text').innerText = 'Select dates to calculate work days';
+                return;
+            }
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+
+            if (end < start) {
+                document.getElementById('calc-days-badge').innerText = '0';
+                document.getElementById('calc-summary-text').innerText = 'End date cannot be prior to start date';
+                return;
+            }
+
+            const diffTime = Math.abs(end - start);
+            const calendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            let workingDays = 0;
+            let current = new Date(start);
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    workingDays++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+
+            document.getElementById('calc-days-badge').innerText = workingDays;
+            document.getElementById('calc-summary-text').innerText = `${calendarDays} calendar days (${workingDays} working days)`;
+            document.getElementById('end-date').setAttribute('min', startVal);
+        }
+
+        function openModal(editId = null) {
+            const modal = document.getElementById('leave-modal');
+            const form = document.getElementById('leave-form');
+            form.reset();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('calc-days-badge').innerText = '0';
+            document.getElementById('calc-summary-text').innerText = 'Select dates to calculate work days';
+
+            if (editId) {
+                document.getElementById('modal-title').innerText = 'Edit Leave Plan';
+                const plan = leavePlans.find(p => p.id === editId);
+                if (plan) {
+                    document.getElementById('edit-id').value = plan.id;
+                    document.getElementById('emp-name').value = plan.name;
+                    document.getElementById('emp-id').value = plan.empId;
+                    document.getElementById('emp-dept').value = plan.department;
+                    document.getElementById('leave-type').value = plan.type;
+                    document.getElementById('start-date').value = plan.startDate;
+                    document.getElementById('end-date').value = plan.endDate;
+                    document.getElementById('leave-reason').value = plan.reason;
+                    calculateDays();
+                }
+            } else {
+                document.getElementById('modal-title').innerText = 'Plan Future Leave';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('leave-modal').classList.add('hidden');
+        }
+
+        function openReviewModal(id, action) {
+            const plan = leavePlans.find(p => p.id === id);
+            if (!plan) return;
+
+            document.getElementById('review-id').value = id;
+            document.getElementById('review-action').value = action;
+            document.getElementById('manager-comment').value = plan.managerComment || '';
+
+            const titleEl = document.getElementById('review-modal-title');
+            const btnEl = document.getElementById('review-submit-btn');
+
+            document.getElementById('review-employee-info').innerText = `${plan.name} (${plan.department} - ${plan.type})`;
+            document.getElementById('review-dates-info').innerText = `Duration: ${formatDate(plan.startDate)} to ${formatDate(plan.endDate)} (${plan.workingDays} working days)`;
+
+            if (action === 'Approved') {
+                titleEl.innerText = 'Approve Leave Request';
+                btnEl.className = 'px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-emerald-200 transition-all cursor-pointer';
+                btnEl.innerText = 'Approve Leave';
+            } else {
+                titleEl.innerText = 'Reject Leave Request';
+                btnEl.className = 'px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-rose-200 transition-all cursor-pointer';
+                btnEl.innerText = 'Reject Leave';
+            }
+
+            document.getElementById('review-modal').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.add('hidden');
+        }
+
+        function handleReviewSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('review-id').value;
+            const action = document.getElementById('review-action').value;
+            const comment = document.getElementById('manager-comment').value.trim();
+
+            const index = leavePlans.findIndex(p => p.id === id);
+            if (index !== -1) {
+                leavePlans[index].status = action;
+                leavePlans[index].managerComment = comment;
+                saveData();
+                renderTable();
+                closeReviewModal();
+                showToast(`Leave request ${action.toLowerCase()} successfully.`);
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('edit-id').value;
+            const name = document.getElementById('emp-name').value.trim();
+            const empId = document.getElementById('emp-id').value.trim();
+            const department = document.getElementById('emp-dept').value;
+            const type = document.getElementById('leave-type').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reason = document.getElementById('leave-reason').value.trim();
+
+            if (new Date(endDate) < new Date(startDate)) {
+                showToast('End date cannot be earlier than start date.', 'error');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const calendarDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+            let workingDays = 0;
+            let current = new Date(start);
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) workingDays++;
+                current.setDate(current.getDate() + 1);
+            }
+
+            if (editId) {
+                const index = leavePlans.findIndex(p => p.id === editId);
+                if (index !== -1) {
+                    leavePlans[index] = {
+                        ...leavePlans[index],
+                        name, empId, department, type, startDate, endDate, workingDays, calendarDays, reason
+                    };
+                    showToast('Leave plan updated successfully!');
+                }
+            } else {
+                const newPlan = {
+                    id: 'LP-' + Math.floor(1000 + Math.random() * 9000),
+                    name, empId, department, type, startDate, endDate, workingDays, calendarDays, reason, status: 'Pending', managerComment: ''
+                };
+                leavePlans.unshift(newPlan);
+                showToast('New future leave plan submitted!');
+            }
+
+            saveData();
+            renderTable();
+            closeModal();
+        }
+
+        function deletePlan(id) {
+            if (confirm('Are you sure you want to delete this leave plan?')) {
+                leavePlans = leavePlans.filter(p => p.id !== id);
+                saveData();
+                renderTable();
+                showToast('Leave plan deleted.', 'info');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all submitted leave data? This action cannot be undone.')) {
+                leavePlans = [];
+                saveData();
+                renderTable();
+                showToast('All records cleared.', 'info');
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('leave-table-body');
+            const emptyState = document.getElementById('empty-state');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const deptFilter = document.getElementById('filter-dept').value;
+
+            const filtered = leavePlans.filter(plan => {
+                const matchesSearch = plan.name.toLowerCase().includes(searchQuery) || 
+                                      plan.empId.toLowerCase().includes(searchQuery) ||
+                                      plan.type.toLowerCase().includes(searchQuery);
+                const matchesDept = deptFilter === '' || plan.department === deptFilter;
+                return matchesSearch && matchesDept;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach((plan, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition-colors';
+
+                // Department color pill
+                let deptBadge = 'bg-slate-100 text-slate-700';
+                if (plan.department === 'Civil') deptBadge = 'bg-orange-50 text-orange-700 border border-orange-200';
+                else if (plan.department === 'Mech') deptBadge = 'bg-blue-50 text-blue-700 border border-blue-200';
+                else if (plan.department === 'Ele') deptBadge = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+
+                // Leave Type badge
+                let typeBadge = 'bg-slate-100 text-slate-700';
+                if (plan.type === 'SL') typeBadge = 'bg-rose-50 text-rose-700 border border-rose-200';
+                else if (plan.type === 'CL') typeBadge = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+                else if (plan.type === 'PL') typeBadge = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+                // Status styling
+                let statusDot = 'bg-amber-400';
+                let statusText = 'Pending';
+                if (plan.status === 'Approved') {
+                    statusDot = 'bg-emerald-500';
+                    statusText = 'Approved';
+                } else if (plan.status === 'Rejected') {
+                    statusDot = 'bg-rose-500';
+                    statusText = 'Rejected';
+                }
+
+                tr.innerHTML = `
+                    <td class="py-4 px-4 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
+                    <td class="py-4 px-6">
+                        <div class="font-semibold text-slate-900">${escapeHtml(plan.name)}</div>
+                        <div class="text-xs text-slate-400 font-mono">${escapeHtml(plan.empId)}</div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${deptBadge}">
+                            ${escapeHtml(plan.department)}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${typeBadge}">
+                            ${escapeHtml(plan.type)}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="text-xs font-medium text-slate-900">${formatDate(plan.startDate)} &rarr; ${formatDate(plan.endDate)}</div>
+                        <div class="text-xs text-slate-400">${plan.calendarDays} calendar days</div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="text-sm font-bold text-indigo-600">${plan.workingDays}</span> <span class="text-xs text-slate-500">days</span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="text-xs text-slate-700 max-w-xs" title="${escapeHtml(plan.reason)}">${escapeHtml(plan.reason || '-')}</div>
+                        <div class="flex items-center space-x-1.5 mt-1">
+                            <span class="inline-block w-2 h-2 rounded-full ${statusDot}"></span>
+                            <span class="text-[11px] font-medium text-slate-500">${statusText}</span>
+                        </div>
+                        ${plan.managerComment ? `<div class="text-[11px] text-slate-500 italic mt-0.5">Manager: "${escapeHtml(plan.managerComment)}"</div>` : ''}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="openReviewModal('${plan.id}', 'Approved')" class="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all cursor-pointer inline-flex items-center justify-center shadow-xs" title="Approve Request">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </button>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="openReviewModal('${plan.id}', 'Rejected')" class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-all cursor-pointer inline-flex items-center justify-center shadow-xs" title="Reject Request">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats() {
+            const totalRequests = leavePlans.length;
+            const totalDays = leavePlans.reduce((acc, curr) => acc + (curr.workingDays || 0), 0);
+            const approvedCount = leavePlans.filter(p => p.status === 'Approved').length;
+            const uniqueDepts = new Set(leavePlans.map(p => p.department)).size;
+
+            document.getElementById('stat-total-requests').innerText = totalRequests;
+            document.getElementById('stat-total-days').innerText = totalDays;
+            document.getElementById('stat-approved').innerText = approvedCount;
+            document.getElementById('stat-depts').innerText = uniqueDepts;
+        }
+
+        function exportJSON() {
+            if (leavePlans.length === 0) {
+                showToast('No data available to export.', 'error');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(leavePlans, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `leave_plans_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('JSON export successful!');
+        }
+
+        function exportCSV() {
+            if (leavePlans.length === 0) {
+                showToast('No data available to export.', 'error');
+                return;
+            }
+            const headers = ['SL. No.', 'Employee Name', 'Employee ID', 'Department', 'Leave Type', 'Start Date', 'End Date', 'Working Days', 'Calendar Days', 'Status', 'Reason', 'Manager Comment'];
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+            leavePlans.forEach((p, idx) => {
+                const row = [
+                    idx + 1,
+                    `"${p.name}"`,
+                    p.empId,
+                    `"${p.department}"`,
+                    `"${p.type}"`,
+                    p.startDate,
+                    p.endDate,
+                    p.workingDays,
+                    p.calendarDays,
+                    p.status,
+                    `"${(p.reason || '').replace(/"/g, '""')}"`,
+                    `"${(p.managerComment || '').replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `leave_plans_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('CSV export successful!');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('notification-toast');
+            const text = document.getElementById('notification-text');
+            const icon = document.getElementById('notification-icon');
+
+            text.innerText = message;
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-exclamation text-rose-400';
+            } else if (type === 'info') {
+                icon.className = 'fa-solid fa-circle-info text-blue-400';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString(undefined, options);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
